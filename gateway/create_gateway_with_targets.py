@@ -1,8 +1,15 @@
+from dotenv import load_dotenv
 from bedrock_agentcore_starter_toolkit.operations.gateway.client import GatewayClient
+
 import logging
 import json
+import os
 
-client = GatewayClient(region_name="us-east-1")
+load_dotenv()
+
+client = GatewayClient(
+    region_name=os.getenv("AWS_DEFAULT_REGION")
+)
 
 client.logger.setLevel(logging.DEBUG)
 
@@ -24,21 +31,13 @@ gateway = client.create_mcp_gateway(
     enable_semantic_search=True
 )
 
-# =====================================
-# Lambda ARNs
-# =====================================
-
-flight_lambda_arn = (
-    "arn:aws:lambda:us-east-1:271376211872:function:Searchroundtripflight"
+flight_lambda_arn = os.getenv(
+    "FLIGHT_LAMBDA_ARN"
 )
 
-weather_lambda_arn = (
-    "arn:aws:lambda:us-east-1:271376211872:function:weather_lambda_1"
+weather_lambda_arn = os.getenv(
+    "WEATHER_LAMBDA_ARN"
 )
-
-# =====================================
-# Flight Tool Schema
-# =====================================
 
 flight_tool_schema = [
     {
@@ -88,10 +87,6 @@ flight_tool_schema = [
     }
 ]
 
-# =====================================
-# Weather Tool Schema
-# =====================================
-
 weather_tool_schema = [
     {
         "name": "get_weather_forecast",
@@ -133,10 +128,6 @@ weather_tool_schema = [
     }
 ]
 
-# =====================================
-# Create Flight MCP Target
-# =====================================
-
 flight_target = client.create_mcp_gateway_target(
 
     gateway=gateway,
@@ -157,10 +148,6 @@ flight_target = client.create_mcp_gateway_target(
 
 print("Flight MCP Tool Added")
 
-# =====================================
-# Create Weather MCP Target
-# =====================================
-
 weather_target = client.create_mcp_gateway_target(
 
     gateway=gateway,
@@ -180,10 +167,6 @@ weather_target = client.create_mcp_gateway_target(
 )
 
 print("Weather MCP Tool Added")
-
-# =====================================
-# Save Config
-# =====================================
 
 config = {
 
@@ -209,10 +192,6 @@ with open(
 ) as f:
 
     json.dump(config, f, indent=2)
-
-# =====================================
-# Success Output
-# =====================================
 
 print("\nGateway Created Successfully")
 
