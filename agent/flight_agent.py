@@ -5,31 +5,31 @@ from mcp.client.streamable_http import streamablehttp_client
 from bedrock_agentcore_starter_toolkit.operations.gateway.client import GatewayClient
 
 import json
+import os
+import ssl
+import urllib3
+import botocore.httpsession
 
-# =====================================
+#  Disable SSL globally (HACKATHON MODE)
+os.environ['PYTHONHTTPSVERIFY'] = '0'
+os.environ['AWS_CA_BUNDLE'] = ''
+os.environ['REQUESTS_CA_BUNDLE'] = ''
+
+ssl._create_default_https_context = ssl._create_unverified_context
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+
 # Load Gateway Config
-# =====================================
 
 with open('../gateway/gateway_config.json', 'r') as f:
     config = json.load(f)
 
-# =====================================
 # Create Gateway Client
-# =====================================
 
 client = GatewayClient(region_name="us-east-1")
-
-# =====================================
-# Get Cognito Access Token
-# =====================================
 
 access_token = client.get_access_token_for_cognito(
     config['cognito_info']['client_info']
 )
-
-# =====================================
-# Create MCP Transport
-# =====================================
 
 transport = streamablehttp_client(
     config['gateway_url'],
@@ -38,31 +38,16 @@ transport = streamablehttp_client(
     }
 )
 
-# =====================================
-# Create Bedrock Model
-# =====================================
-
 model = BedrockModel(
-    model_id="amazon.nova-lite-v1:0",
+    model_id="openai.gpt-oss-safeguard-120b",
     temperature=0.3,
-    streaming=True
+    streaming=False,
+    region_name="us-east-1"  
 )
-
-# =====================================
-# Create MCP Client
-# =====================================
 
 mcp_client = MCPClient(lambda: transport)
 
-# =====================================
-# Start MCP Session
-# =====================================
-
 mcp_client.__enter__()
-
-# =====================================
-# Load Tools
-# =====================================
 
 tools = mcp_client.list_tools_sync()
 
@@ -71,10 +56,6 @@ flight_tools = [
     if "flight" in tool.tool_name.lower()
 ]
 
-# =====================================
-# Create Flight Agent
-# =====================================
-
 flight_agent = Agent(
 
     model=model,
@@ -82,29 +63,53 @@ flight_agent = Agent(
     tools=flight_tools,
 
     system_prompt="""
-You are a specialized flight booking assistant.
+You are a flight assistant.
 
-Responsibilities:
-- Search flights using MCP tools.
-- Never invent flight data.
-- Always use tools for real-time information.
-- Keep responses concise and structured.
+Your role is to present flight options in a clean, structured, and easy-to-read format.
+
+Rules:
+- Use only the tool data
+- Always include airline name from "airlines" field
+- If multiple airlines exist, join with comma
+- If airline is missing, show: "Airline: Not specified"
+
+- Keep the output clear and aligned
+- Do NOT include explanations, reasoning, or extra text
+
+Output format:
+
+Flight Options:
+
+1. Airline: <airline name>
+   Flight Number: <number>
+
+   Outbound:
+     Departure at <time> on <date>
+     Arrival at <time> on <date>
+     Duration: <minutes> minutes
+     Stops: <count>
+
+   Return:
+     Departure at <time> on <date>
+     Arrival at <time> on <date>
+     Duration: <minutes> minutes
+     Stops: <count>
+
+   Price: $<amount>
+
+Important:
+- Maintain spacing and indentation exactly
+- Do not include thinking text
+- Do not add unrelated information
+
 """
 )
-
-# =====================================
-# Callable Function
-# =====================================
 
 def run_flight_agent(query):
 
     response = flight_agent(query)
 
     return str(response)
-
-# =====================================
-# Standalone Chat Mode
-# =====================================
 
 if __name__ == "__main__":
 

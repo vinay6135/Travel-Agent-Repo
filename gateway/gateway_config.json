@@ -1,24 +1,24 @@
 {
-  "gateway_url": "https://flightgateway-mcp-1-lmxa2dr13x.gateway.bedrock-agentcore.us-east-1.amazonaws.com/mcp",
-  "gateway_id": "flightgateway-mcp-1-lmxa2dr13x",
+  "gateway_url": "https://travel-agent-gateway-ita9ijiipv.gateway.bedrock-agentcore.us-east-1.amazonaws.com/mcp",
+  "gateway_id": "travel-agent-gateway-ita9ijiipv",
   "cognito_info": {
     "authorizer_config": {
       "customJWTAuthorizer": {
         "allowedClients": [
-          "3r477geaic3ug13dtcd0qu6hm1"
+          "6p2foov95ebfjd78nfg8ih0bp9"
         ],
-        "discoveryUrl": "https://cognito-idp.us-east-1.amazonaws.com/us-east-1_Xc8fTN3Ko/.well-known/openid-configuration"
+        "discoveryUrl": "https://cognito-idp.us-east-1.amazonaws.com/us-east-1_4fjKwHMnl/.well-known/openid-configuration"
       }
     },
     "client_info": {
-      "client_id": "3r477geaic3ug13dtcd0qu6hm1",
-      "client_secret": "1v2374r80c9qs7ghfn3foljn47oh1t3tlch0tr80l2fman3b4kp7",
-      "user_pool_id": "us-east-1_Xc8fTN3Ko",
-      "token_endpoint": "https://agentcore-d66e2e9c.auth.us-east-1.amazoncognito.com/oauth2/token",
+      "client_id": "6p2foov95ebfjd78nfg8ih0bp9",
+      "client_secret": "1f5qin4rfoemiil0ff0roibeo01n73nkmvaqu488v29r2na55iuu",
+      "user_pool_id": "us-east-1_4fjKwHMnl",
+      "token_endpoint": "https://agentcore-c7877a8d.auth.us-east-1.amazoncognito.com/oauth2/token",
       "scope": "FlightAuthorizer/invoke",
-      "domain_prefix": "agentcore-d66e2e9c"
+      "domain_prefix": "agentcore-c7877a8d"
     }
   },
-  "flight_target_id": "DJZGZBEL0O",
-  "weather_target_id": "LHH1Y7TQET"
+  "flight_target_id": "TUXOXZTT4G",
+  "weather_target_id": "JDQJ2GDWYL"
 }

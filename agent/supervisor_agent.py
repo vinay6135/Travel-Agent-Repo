@@ -1,46 +1,58 @@
+import os
+import ssl
+import urllib3
+import logging
+
 from strands import Agent
 from strands.models import BedrockModel
 
 from flight_agent import run_flight_agent
 from weather_agent import run_weather_agent
 
-# =====================================
-# Create Supervisor Model
-# =====================================
+# Disable SSL (Hackathon mode)
+os.environ['PYTHONHTTPSVERIFY'] = '0'
+os.environ['AWS_CA_BUNDLE'] = ''
+os.environ['REQUESTS_CA_BUNDLE'] = ''
 
+ssl._create_default_https_context = ssl._create_unverified_context
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+
+# ✅ Reduce noisy logs
+logging.getLogger().setLevel(logging.ERROR)
+
+# Create Bedrock model
 model = BedrockModel(
-    model_id="amazon.nova-lite-v1:0",
+    model_id="openai.gpt-oss-safeguard-120b",
     temperature=0.3,
-    streaming=True
+    streaming=False,
+    region_name="us-east-1"
 )
 
-# =====================================
-# Create Supervisor Agent
-# =====================================
-
+# Create supervisor agent
 supervisor_agent = Agent(
-
     model=model,
-
     system_prompt="""
 You are a supervisor travel assistant.
 
 Responsibilities:
-- Understand user travel requests.
-- Decide whether flight agent or weather agent is needed.
-- Coordinate specialized agents.
-- Combine final responses clearly.
+- Understand user intent
+- Decide whether flight or weather agent is needed
+- Combine responses cleanly
+
+Rules:
+- Never show internal reasoning
+- Never repeat responses
+- Keep output clean and structured
+- If no tool needed, answer directly
 """
 )
 
-print("\n===================================")
-print("🧠 Supervisor Agent Ready")
+print("\n✅ Supervisor Agent Ready")
 print("Type 'exit' or 'quit' to stop")
-print("===================================")
 
-# =====================================
-# Chat Loop
-# =====================================
+# Keywords
+flight_keywords = ["flight", "ticket", "book", "travel", "fly"]
+weather_keywords = ["weather", "forecast", "temperature", "rain"]
 
 while True:
 
@@ -50,85 +62,55 @@ while True:
         break
 
     try:
-
         flight_response = ""
         weather_response = ""
 
-        # =====================================
-        # Flight Intent
-        # =====================================
+        is_flight = any(word in query.lower() for word in flight_keywords)
+        is_weather = any(word in query.lower() for word in weather_keywords)
 
-        if any(word in query.lower() for word in [
-            "flight",
-            "ticket",
-            "fly",
-            "travel"
-        ]):
-
+        # ✅ Flight Agent
+        if is_flight:
             print("\n✈️ Flight Agent Working...\n")
 
+            flight_query = f"""
+Extract flight details and return only flight results.
 
-        flight_query = f"""
-        Find round trip flights mentioned in this request.
+User request:
+{query}
+"""
+            flight_response = run_flight_agent(flight_query)
 
-        User Request:
-        {query}
-        """
-
-        flight_response = run_flight_agent(
-        flight_query
-)
-
-    
-
-        # =====================================
-        # Weather Intent
-        # =====================================
-
-        if any(word in query.lower() for word in [
-            "weather",
-            "forecast",
-            "temperature",
-            "rain"
-        ]):
-
+        # ✅ Weather Agent
+        if is_weather:
             print("\n🌦️ Weather Agent Working...\n")
 
             weather_query = f"""
-            Provide only weather forecast information from this request.
+Extract weather request and return forecast.
 
-            User Request:
-            {query}
-            """
+User request:
+{query}
+"""
+            weather_response = run_weather_agent(weather_query)
 
-            weather_response = run_weather_agent(
-    weather_query
-)
+        # ✅ ✅ SINGLE CLEAN PRINT (NO DUPLICATION)
+        if flight_response or weather_response:
 
-        # =====================================
-        # Final Combined Output
-        # =====================================
+            print("\n================ FINAL RESPONSE ================\n")
 
-        if flight_response:
-            print("\n========== Flights ==========\n")
-            print(flight_response)
+            if flight_response:
+                print("✈️ Flights:\n")
+                print(flight_response.strip())
 
-        if weather_response:
-            print("\n========== Weather ==========\n")
-            print(weather_response)
+            if weather_response:
+                print("\n🌦️ Weather:\n")
+                print(weather_response.strip())
 
-        # =====================================
-        # General Questions
-        # =====================================
-
-        if not flight_response and not weather_response:
-
+        # ✅ Supervisor handles general queries
+        else:
             print("\n🧠 Supervisor Response:\n")
 
             response = supervisor_agent(query)
-
-            print(response)
+            print(str(response).strip())
 
     except Exception as e:
-
-        print(f"\nError: {e}")
+        print(f"\n❌ Error: {e}")
