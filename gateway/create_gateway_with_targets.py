@@ -7,8 +7,6 @@ import os
 import ssl
 import urllib3
 
-
-# ✅ HARD OVERRIDE SSL (stronger)
 os.environ['PYTHONHTTPSVERIFY'] = '0'
 os.environ['AWS_CA_BUNDLE'] = ''
 
@@ -22,7 +20,6 @@ client = GatewayClient(
     region_name=os.getenv("AWS_DEFAULT_REGION")
 )
 
-# ✅ Force AWS SDK inside client to ignore SSL
 try:
     client._session.verify = False
 except Exception:
@@ -39,13 +36,15 @@ cognito_response = client.create_oauth_authorizer_with_cognito(
 print("Creating Gateway...")
 
 gateway = client.create_mcp_gateway(
-    name="Travel-Agent-Gateway",
+    name="Travel-Agent-Gateway-1",
     authorizer_config=cognito_response["authorizer_config"],
     enable_semantic_search=True
 )
 
 flight_lambda_arn = os.getenv("FLIGHT_LAMBDA_ARN")
 weather_lambda_arn = os.getenv("WEATHER_LAMBDA_ARN")
+pdf_lambda_arn = os.getenv("PDF_LAMBDA_ARN")
+accommodation_lambda_arn = os.getenv("ACCOMMODATION_LAMBDA_ARN")
 
 flight_tool_schema = [
     {
@@ -109,6 +108,72 @@ weather_tool_schema = [
         }
     }
 ]
+pdf_tool_schema = [
+    {
+        "name": "generate_travel_pdf",
+
+        "description":
+            "Generate travel PDF and upload to S3",
+
+        "inputSchema": {
+
+            "type": "object",
+
+            "properties": {
+
+                "flight_details": {
+                    "type": "string",
+                    "description":
+                        "Flight details text"
+                },
+
+                "weather_details": {
+                    "type": "string",
+                    "description":
+                        "Weather details text"
+                }
+            },
+
+            "required": [
+                "flight_details",
+                "weather_details"
+            ]
+        }
+    }
+]
+
+accommodation_tool_schema = [
+    {
+        "name": "search_hotels",
+
+        "description":
+            "Search hotels by city and max price",
+
+        "inputSchema": {
+
+            "type": "object",
+
+            "properties": {
+
+                "city": {
+                    "type": "string",
+                    "description":
+                        "City name"
+                },
+
+                "max_price": {
+                    "type": "number",
+                    "description":
+                        "Maximum hotel price"
+                }
+            },
+
+            "required": [
+                "city"
+            ]
+        }
+    }
+]
 
 flight_target = client.create_mcp_gateway_target(
     gateway=gateway,
@@ -138,12 +203,56 @@ weather_target = client.create_mcp_gateway_target(
 
 print("Weather MCP Tool Added")
 
+accommodation_target = client.create_mcp_gateway_target(
+
+    gateway=gateway,
+
+    name="AccommodationTools",
+
+    target_type="lambda",
+
+    target_payload={
+
+        "lambdaArn":
+            accommodation_lambda_arn,
+
+        "toolSchema": {
+            "inlinePayload":
+                accommodation_tool_schema
+        }
+    }
+)
+
+print("Accommodation MCP Tool Added")
+
+pdf_target = client.create_mcp_gateway_target(
+
+    gateway=gateway,
+
+    name="PDFTools",
+
+    target_type="lambda",
+
+    target_payload={
+
+        "lambdaArn": pdf_lambda_arn,
+
+        "toolSchema": {
+            "inlinePayload": pdf_tool_schema
+        }
+    }
+)
+
+print("PDF MCP Tool Added")
+
 config = {
     "gateway_url": gateway['gatewayUrl'],
     "gateway_id": gateway['gatewayId'],
     "cognito_info": cognito_response,
     "flight_target_id": flight_target['targetId'],
-    "weather_target_id": weather_target['targetId']
+    "weather_target_id": weather_target['targetId'],
+    "accommodation_target_id":accommodation_target['targetId'],
+    "pdf_target_id": pdf_target['targetId']
 }
 
 with open('gateway_config.json', 'w') as f:
@@ -157,3 +266,5 @@ print(gateway['gatewayUrl'])
 print("\nAvailable MCP Tools:")
 print("1. FlightTools___search_flights")
 print("2. WeatherTools___get_weather_forecast")
+print("3. AccommodationTools___search_hotels")
+print("4. generate_pdf_Tool")
