@@ -8,7 +8,6 @@ import ssl
 import urllib3
 
 
-# ✅ HARD OVERRIDE SSL (stronger)
 os.environ['PYTHONHTTPSVERIFY'] = '0'
 os.environ['AWS_CA_BUNDLE'] = ''
 
@@ -22,7 +21,7 @@ client = GatewayClient(
     region_name=os.getenv("AWS_DEFAULT_REGION")
 )
 
-# ✅ Force AWS SDK inside client to ignore SSL
+
 try:
     client._session.verify = False
 except Exception:
