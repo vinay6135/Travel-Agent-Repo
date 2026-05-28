@@ -10,7 +10,6 @@ import ssl
 import urllib3
 import botocore.httpsession
 
-#  Disable SSL globally (HACKATHON MODE)
 os.environ['PYTHONHTTPSVERIFY'] = '0'
 os.environ['AWS_CA_BUNDLE'] = ''
 os.environ['REQUESTS_CA_BUNDLE'] = ''
@@ -18,12 +17,10 @@ os.environ['REQUESTS_CA_BUNDLE'] = ''
 ssl._create_default_https_context = ssl._create_unverified_context
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
-# Load Gateway Config
 
 with open('../gateway/gateway_config.json', 'r') as f:
     config = json.load(f)
 
-# Create Gateway Client
 
 client = GatewayClient(region_name="us-east-1")
 
