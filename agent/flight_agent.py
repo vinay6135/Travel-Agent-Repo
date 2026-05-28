@@ -4,6 +4,7 @@ from strands.tools.mcp.mcp_client import MCPClient
 from mcp.client.streamable_http import streamablehttp_client
 from bedrock_agentcore_starter_toolkit.operations.gateway.client import GatewayClient
 
+
 import json
 import os
 import ssl
@@ -54,6 +55,7 @@ flight_tools = [
 ]
 
 flight_agent = Agent(
+    name="flight_agent",
 
     model=model,
 

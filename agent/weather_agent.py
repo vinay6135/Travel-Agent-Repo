@@ -78,6 +78,7 @@ weather_tools = [
 # Create Weather Agent
 
 weather_agent = Agent(
+    name="weather_agent",
 
     model=model,
 

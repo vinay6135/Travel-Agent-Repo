@@ -60,6 +60,7 @@ accommodation_tools = [
  
 # Create Accommodation Agent
 accommodation_agent = Agent(
+    name="accommodation_agent",
  
     model=model,
  

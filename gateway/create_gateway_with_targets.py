@@ -36,7 +36,7 @@ cognito_response = client.create_oauth_authorizer_with_cognito(
 print("Creating Gateway...")
 
 gateway = client.create_mcp_gateway(
-    name="Travel-Agent-Gateway-backend",
+    name="Gateway-Travel-Agent-1",
     authorizer_config=cognito_response["authorizer_config"],
     enable_semantic_search=True
 )
@@ -114,7 +114,7 @@ pdf_tool_schema = [
         "name": "generate_travel_pdf",
 
         "description":
-            "Generate travel PDF and upload to S3",
+            "Generate PDF from final travel report",
 
         "inputSchema": {
 
@@ -122,22 +122,15 @@ pdf_tool_schema = [
 
             "properties": {
 
-                "flight_details": {
+                "report_content": {
                     "type": "string",
                     "description":
-                        "Flight details text"
-                },
-
-                "weather_details": {
-                    "type": "string",
-                    "description":
-                        "Weather details text"
+                        "Final AI generated travel report"
                 }
             },
 
             "required": [
-                "flight_details",
-                "weather_details"
+                "report_content"
             ]
         }
     }
